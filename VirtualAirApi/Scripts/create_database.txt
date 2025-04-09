@@ -1,0 +1,20 @@
+﻿create table public.observatory (
+  id integer primary key not null default nextval('observatory_id_seq'::regclass),
+  baseurl character varying(255) not null,
+  version character varying(255) not null,
+  extension character varying(255),
+  formatnavlinks character varying(255),
+  code character varying(255)
+);
+
+create table public."user" (
+  password character varying(255),
+  username character varying(255),
+  id uuid primary key not null,
+  salt character varying(255),
+  email character varying(255),
+  admin boolean default false
+);
+create unique index user_email_uindex on "user" using btree (email);
+create unique index user_username_uindex on "user" using btree (username);
+

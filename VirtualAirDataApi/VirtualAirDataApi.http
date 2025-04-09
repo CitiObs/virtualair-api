@@ -1,0 +1,6 @@
+@VirtualAirDataApi_HostAddress = http://localhost:5245
+
+GET {{VirtualAirDataApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

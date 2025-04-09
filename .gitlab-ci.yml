@@ -1,0 +1,97 @@
+stages:    
+  - buildapi
+  - pushapi
+  - builddataapi
+  - pushdataapi
+
+# Define variables to be used in the pipeline
+variables:
+  APP_VERSION: "a_1.0.11" # Application version used as tag on image
+  APPDATA_VERSION: "da_1.0.24" # Application version used as tag on image
+
+# Job definition for building Docker image using Kaniko
+docker:buildapi:
+  stage: buildapi
+  # Use the Kaniko executor image
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  # Script to build the Docker image with Kaniko
+  script:
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/VirtualAirApi/Dockerfile
+      --no-push
+      --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+      --tar-path image.tar
+  # Define artifacts (files generated during the job) to be passed to the next stage
+  artifacts:
+    paths:
+      - image.tar
+  # Specify when to run the job (on_success) and only on the test branch
+  when: on_success
+  only:
+    - test
+    - prod
+
+# Job definition for pushing Docker image to the registry
+docker:pushapi:
+  stage: pushapi
+  # Use the Crane image for pushing Docker images
+  image:
+    name: gcr.io/go-containerregistry/crane:debug
+    entrypoint: [""]
+  # Script to authenticate, login, and push the Docker image to the registryy
+  script:
+    - crane auth login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - crane push image.tar $CI_REGISTRY_IMAGE:$APP_VERSION-$CI_COMMIT_BRANCH
+  # Specify dependencies (docker:build) and when to run the job (on_success) only on the test branch
+  needs:
+    - docker:buildapi
+  when: on_success
+  only:
+    - test
+    - prod
+
+# Job definition for building Docker image using Kaniko
+docker:builddataapi:
+  stage: builddataapi
+  # Use the Kaniko executor image
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  # Script to build the Docker image with Kaniko
+  script:
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/VirtualAirDataApi/Dockerfile
+      --no-push
+      --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+      --tar-path imagedata.tar
+  # Define artifacts (files generated during the job) to be passed to the next stage
+  artifacts:
+    paths:
+      - imagedata.tar
+  # Specify when to run the job (on_success) and only on the test branch
+  when: on_success
+  only:
+    - test
+    - prod
+
+docker:pushdataapi:
+  stage: pushdataapi
+  # Use the Crane image for pushing Docker images
+  image:
+    name: gcr.io/go-containerregistry/crane:debug
+    entrypoint: [""]
+  # Script to authenticate, login, and push the Docker image to the registryy
+  script:
+    - crane auth login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - crane push imagedata.tar $CI_REGISTRY_IMAGE:$APPDATA_VERSION-$CI_COMMIT_BRANCH
+  # Specify dependencies (docker:build) and when to run the job (on_success) only on the test branch
+  needs:
+    - docker:builddataapi
+  when: on_success
+  only:
+  - test
+  - prod
