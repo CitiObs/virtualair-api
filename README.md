@@ -5,6 +5,6 @@ This solution contains two projects:
 	- VirtualAirDataApi: The API for accessing data from the different observatories by forwarding the request and merging the results, Observations will be aggregated  
 
 ## Dependencies
-Use the project virtualair-docker-compose to publish to a docker container. This is done by changing the image version and merge to test/prod
+Use the project virtualair-deployment to publish to a docker container. This is done by changing the image version and merge to test/prod
 	
 
